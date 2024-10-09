@@ -113,11 +113,6 @@ namespace osu.Game.Overlays.SkinEditor
                         .ToArray()
             };
 
-            yield return new OsuMenuItem("Snap")
-            {
-                Items = createSnapItems(applySnaps).ToArray()
-            };
-
             yield return originMenu = new OsuMenuItem("Origin");
 
             closestItem.State.BindValueChanged(s =>
@@ -189,26 +184,6 @@ namespace osu.Game.Overlays.SkinEditor
                     };
                 });
             }
-
-            IEnumerable<OsuMenuItem> createSnapItems(Action<Anchor> applyFunction)
-            {
-                var displayableSnaps = new[]
-                {
-                    Anchor.TopLeft,
-                    Anchor.TopCentre,
-                    Anchor.TopRight,
-                    Anchor.CentreLeft,
-                    Anchor.Centre,
-                    Anchor.CentreRight,
-                    Anchor.BottomLeft,
-                    Anchor.BottomCentre,
-                    Anchor.BottomRight,
-                };
-                return displayableSnaps.Select(snap =>
-                {
-                    return new OsuMenuItem(snap.ToString(), MenuItemType.Standard, () => applyFunction(snap));
-                });
-            }
         }
 
         private static void updateDrawablePosition(Drawable drawable, Vector2 screenSpacePosition)
@@ -251,21 +226,6 @@ namespace osu.Game.Overlays.SkinEditor
 
                 item.UsesFixedAnchor = true;
                 applyAnchor(drawable, anchor);
-            }
-
-            OnOperationEnded();
-        }
-
-        private void applySnaps(Anchor anchor)
-        {
-            OnOperationBegan();
-
-            foreach (var item in SelectedItems)
-            {
-                var drawable = (Drawable)(item);
-
-                item.UsesFixedAnchor = true;
-                applySnap(drawable, anchor);
             }
 
             OnOperationEnded();
@@ -322,13 +282,6 @@ namespace osu.Game.Overlays.SkinEditor
             var previousAnchor = drawable.AnchorPosition;
             drawable.Anchor = anchor;
             drawable.Position -= drawable.AnchorPosition - previousAnchor;
-        }
-
-        private static void applySnap(Drawable drawable, Anchor anchor)
-        {
-            applyAnchor(drawable, anchor);
-            applyOrigin(drawable, anchor);
-            drawable.Position = Vector2.Zero;
         }
 
         private static void applyOrigin(Drawable drawable, Anchor screenSpaceOrigin)
