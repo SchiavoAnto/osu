@@ -9,6 +9,7 @@ using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.UserInterface;
+using osu.Framework.Input.Events;
 using osu.Game.Extensions;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Rulesets.Edit;
@@ -16,12 +17,15 @@ using osu.Game.Screens.Edit.Compose.Components;
 using osu.Game.Skinning;
 using osu.Game.Utils;
 using osuTK;
+using osuTK.Input;
 
 namespace osu.Game.Overlays.SkinEditor
 {
     public partial class SkinSelectionHandler : SelectionHandler<ISerialisableDrawable>
     {
         private OsuMenuItem originMenu = null!;
+
+        private bool isSnapping = false;
 
         [Resolved]
         private SkinEditor skinEditor { get; set; } = null!;
@@ -63,6 +67,33 @@ namespace osu.Game.Overlays.SkinEditor
             return true;
         }
 
+        protected override bool OnKeyDown(KeyDownEvent e)
+        {
+            if (e.Key == Key.LShift)
+            {
+                isSnapping = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        protected override void OnKeyUp(KeyUpEvent e)
+        {
+            if (e.Key == Key.LShift)
+                isSnapping = false;
+        }
+
+        private void snapElement(ISerialisableDrawable element, Vector2 unsnappedPosition)
+        {
+            Drawable drawable = (Drawable)element;
+            drawable.Position = unsnappedPosition;
+
+            ApplyClosestAnchorOrigin(drawable);
+
+            drawable.Position = Vector2.Zero;
+        }
+
         public override bool HandleMovement(MoveSelectionEvent<ISerialisableDrawable> moveEvent)
         {
             foreach (var c in SelectedBlueprints)
@@ -73,7 +104,16 @@ namespace osu.Game.Overlays.SkinEditor
                 if (!item.UsesFixedAnchor)
                     ApplyClosestAnchorOrigin(drawable);
 
-                drawable.Position += drawable.ScreenSpaceDeltaToParentSpace(moveEvent.ScreenSpaceDelta);
+                Vector2 position = drawable.Position + drawable.ScreenSpaceDeltaToParentSpace(moveEvent.ScreenSpaceDelta);
+
+                if (isSnapping)
+                {
+                    snapElement(item, position);
+                }
+                else
+                {
+                    drawable.Position = position;
+                }
             }
 
             return true;
